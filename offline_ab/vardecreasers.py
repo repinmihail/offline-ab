@@ -42,29 +42,21 @@ class CUPED(ABCore):
             Tuple[pd.DataFrame, pd.DataFrame]: данные для cuped'a
         """
         # Определяем день недели
-        pre_pilot_df["weekday"] = pre_pilot_df[self.config.time_series_field].apply(
-            lambda x: self.check_weekday(x)
-        )
-        pilot_df["weekday"] = pilot_df[self.config.time_series_field].apply(
-            lambda x: self.check_weekday(x)
-        )
+        pre_pilot_df["weekday"] = pre_pilot_df[self.config.time_series_field].apply(lambda x: self.check_weekday(x))
+        pilot_df["weekday"] = pilot_df[self.config.time_series_field].apply(lambda x: self.check_weekday(x))
         # Все юниты в тесте и контроле
         all_units = functools.reduce(operator.iconcat, all_groups.values(), [])
         # Предпилотный период
-        dates_for_lin = sorted(
-            list(set(pre_pilot_df[self.config.time_series_field].values))
-        )[-self.config.days_for_test - 1 :]
+        dates_for_lin = sorted(list(set(pre_pilot_df[self.config.time_series_field].values)))[
+            -self.config.days_for_test - 1 :
+        ]
         pre_pilot_df = pre_pilot_df[
             pre_pilot_df[self.config.time_series_field].isin(dates_for_lin)
             & pre_pilot_df[self.config.id_field].isin(all_units)
         ]
         pilot_df = pilot_df[pilot_df[self.config.id_field].isin(all_units)]
-        pilot_df_sort = pilot_df.sort_values(
-            [self.config.id_field, self.config.time_series_field]
-        )
-        pre_pilot_df_sort = pre_pilot_df.sort_values(
-            [self.config.id_field, self.config.time_series_field]
-        )
+        pilot_df_sort = pilot_df.sort_values([self.config.id_field, self.config.time_series_field])
+        pre_pilot_df_sort = pre_pilot_df.sort_values([self.config.id_field, self.config.time_series_field])
         pilot_df_sort["row_number"] = [i for i in range(0, len(pilot_df_sort))]
         pre_pilot_df_sort["row_number"] = [i for i in range(0, len(pre_pilot_df_sort))]
         pilot_df_sort["period"] = "pilot"
@@ -104,9 +96,7 @@ class CUPED(ABCore):
         covariance = np.cov(self.y_prepilot, self.y_pilot)[0, 1]
 
         if is_ratio:
-            variance = self.delta_method(prepilot_period, self.config.id_field)[
-                "var_metric"
-            ]
+            variance = self.delta_method(prepilot_period, self.config.id_field)["var_metric"]
         else:
             variance = np.var(self.y_prepilot)
         theta = covariance / variance
@@ -134,12 +124,8 @@ class CUPED(ABCore):
         Returns:
             pd.DataFrame: датафрейм с cuped метрикой
         """
-        prepilot_period = df_history[df_history["period"] == "history"].sort_values(
-            self.sortmerge_list
-        )
-        pilot_period = df_experiment[df_experiment["period"] == "pilot"].sort_values(
-            self.sortmerge_list
-        )
+        prepilot_period = df_history[df_history["period"] == "history"].sort_values(self.sortmerge_list)
+        pilot_period = df_experiment[df_experiment["period"] == "pilot"].sort_values(self.sortmerge_list)
         self.var_before_cuped = np.var(pilot_period[self.config.target_metric])
         if not theta:
             self.theta = self._calculate_theta(
@@ -161,13 +147,10 @@ class CUPED(ABCore):
                 f"Theta is: {self.theta}",
             )
         res[f"{self.config.target_metric}_cuped"] = (
-            res[f"{self.config.target_metric}_pilot"]
-            - self.theta * res[f"{self.config.target_metric}_prepilot"]
+            res[f"{self.config.target_metric}_pilot"] - self.theta * res[f"{self.config.target_metric}_prepilot"]
         )
         self.var_after_cuped = np.var(res[f"{self.config.target_metric}_cuped"])
-        self.var_diff = np.round(
-            (self.var_before_cuped / self.var_after_cuped - 1) * 100, 3
-        )
+        self.var_diff = np.round((self.var_before_cuped / self.var_after_cuped - 1) * 100, 3)
         self.var_analysis_dict = dict(
             var_before_cuped=self.var_before_cuped,
             var_after_cuped=self.var_after_cuped,
@@ -187,9 +170,7 @@ class CUPED(ABCore):
         """
         if is_pilot_estimation:
             self.data["test_period"] = self.data[self.config.time_series_field].apply(
-                lambda x: self.test_split(
-                    x, self.config.start_of_test, self.config.end_of_test
-                )
+                lambda x: self.test_split(x, self.config.start_of_test, self.config.end_of_test)
             )
             pilot_df_sort, pre_pilot_df_sort = self.sort_merge_for_cuped(
                 self.data[self.data["test_period"] == "pre_pilot"],
@@ -202,9 +183,7 @@ class CUPED(ABCore):
                 self.data[self.data["periods"] == "validation"],
                 self.all_groups,
             )
-        cuped_df = self.calculate_cuped_metric(
-            df_history=pre_pilot_df_sort, df_experiment=pilot_df_sort
-        )
+        cuped_df = self.calculate_cuped_metric(df_history=pre_pilot_df_sort, df_experiment=pilot_df_sort)
         return cuped_df
 
 
@@ -238,9 +217,5 @@ class GetDecreaser(ABCore):
         decreaser = self.config.decreaser
         if isinstance(decreaser, str):
             decreaser = [decreaser]
-        ready_decreaser = {
-            i: AllDecreasers.__annotations__[i]
-            for i in decreaser
-            if i in AllDecreasers.__annotations__
-        }
+        ready_decreaser = {i: AllDecreasers.__annotations__[i] for i in decreaser if i in AllDecreasers.__annotations__}
         return ready_decreaser

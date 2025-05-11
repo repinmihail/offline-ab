@@ -5,7 +5,7 @@ import operator
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 from typing import List
-from dtaidistance import dtw # type: ignore
+from dtaidistance import dtw  # type: ignore
 from functools import reduce
 from dataclasses import dataclass
 from offline_ab.abcore import ABCore, StaticHelper
@@ -43,21 +43,13 @@ class KNNDTWSelection(ABCore):
             pd.DataFrame: исходный датафрейм + масштабированная метрика
         """
         try:
-            scaled_metric = StandardScaler().fit_transform(
-                self.data[[self.config.target_metric]]
-            )
+            scaled_metric = StandardScaler().fit_transform(self.data[[self.config.target_metric]])
         except KeyError:
-            raise KeyError(
-                f"Frame data does not contain the field with name {self.config.target_metric}"
-            )
+            raise KeyError(f"Frame data does not contain the field with name {self.config.target_metric}")
         self.data[f"scaled_{self.config.target_metric}"] = scaled_metric
-        self.data = self.data.sort_values(
-            by=[self.config.id_field, self.config.time_series_field]
-        )
+        self.data = self.data.sort_values(by=[self.config.id_field, self.config.time_series_field])
         self.data_vec = (
-            self.data.groupby(self.config.id_field)
-            .agg({f"scaled_{self.config.target_metric}": list})
-            .reset_index()
+            self.data.groupby(self.config.id_field).agg({f"scaled_{self.config.target_metric}": list}).reset_index()
         )
         self.data_vec[f"{self.config.target_metric}_array"] = [
             np.array(i) for i in self.data_vec[f"scaled_{self.config.target_metric}"]
@@ -85,14 +77,10 @@ class KNNDTWSelection(ABCore):
                 if key not in self.config.test_units:
                     distances[key] = dtw.distance(vector, vectors[target_unit])
             sorted_distances = sorted(distances.items(), key=lambda item: item[1])
-            self.unit_distances_dtw[target_unit] = dict(
-                sorted_distances[: self.config.n_neighbors_dtw]
-            )
+            self.unit_distances_dtw[target_unit] = dict(sorted_distances[: self.config.n_neighbors_dtw])
         return self.unit_distances_dtw
 
-    def get_test_control_groups(
-        self, neighbors_dict: dict, adj_control: List[str] = None
-    ) -> dict:
+    def get_test_control_groups(self, neighbors_dict: dict, adj_control: List[str] = None) -> dict:
         """
         Формирует словарь со списками тестовых и контрольных юнитов в значениях словаря
 
@@ -105,9 +93,7 @@ class KNNDTWSelection(ABCore):
         """
         if not adj_control:
             unique_closest_cities = self.find_unique_closest_units(neighbors_dict)
-            self.control_units = [
-                list(val)[0] for _, val in unique_closest_cities.items()
-            ]
+            self.control_units = [list(val)[0] for _, val in unique_closest_cities.items()]
         else:
             self.control_units = adj_control
         return dict(
@@ -158,21 +144,13 @@ class KNNEUCLSelection(ABCore, StaticHelper):
             pd.DataFrame: исходный датафрейм + масштабированная метрика
         """
         try:
-            scaled_metric = StandardScaler().fit_transform(
-                self.data[[self.config.target_metric]]
-            )
+            scaled_metric = StandardScaler().fit_transform(self.data[[self.config.target_metric]])
         except KeyError:
-            raise KeyError(
-                f"Frame data does not contain the field with name {self.config.target_metric}"
-            )
+            raise KeyError(f"Frame data does not contain the field with name {self.config.target_metric}")
         self.data[f"scaled_{self.config.target_metric}"] = scaled_metric
-        self.data = self.data.sort_values(
-            by=[self.config.id_field, self.config.time_series_field]
-        )
+        self.data = self.data.sort_values(by=[self.config.id_field, self.config.time_series_field])
         self.data_vec = (
-            self.data.groupby(self.config.id_field)
-            .agg({f"scaled_{self.config.target_metric}": list})
-            .reset_index()
+            self.data.groupby(self.config.id_field).agg({f"scaled_{self.config.target_metric}": list}).reset_index()
         )
         self.data_vec[f"{self.config.target_metric}_array"] = [
             np.array(i) for i in self.data_vec[f"scaled_{self.config.target_metric}"]
@@ -197,9 +175,9 @@ class KNNEUCLSelection(ABCore, StaticHelper):
 
         def get_knn(vectors):
             vector_arrays = [list(i) for i in vectors.values()]
-            return NearestNeighbors(
-                n_neighbors=self.config.n_neighbors_eucl + 1, algorithm=algorithm
-            ).fit(vector_arrays)
+            return NearestNeighbors(n_neighbors=self.config.n_neighbors_eucl + 1, algorithm=algorithm).fit(
+                vector_arrays
+            )
 
         def flatten_neighbour_list(distance, ids):
             dist_list, nb_list = distance.tolist(), ids.tolist()
@@ -207,31 +185,19 @@ class KNNEUCLSelection(ABCore, StaticHelper):
 
         self.unit_distances_eucl = {unit: [] for unit in self.config.test_units}
         # из обучающей выборки исключены тестовые юниты
-        knn = get_knn(
-            {
-                key: val
-                for key, val in vectors.items()
-                if key not in self.config.test_units
-            }
-        )
+        knn = get_knn({key: val for key, val in vectors.items() if key not in self.config.test_units})
         for target_unit in self.config.test_units:
             vector = vectors[target_unit].reshape(1, -1)
-            dist, nb_indexes = knn.kneighbors(
-                vector, self.config.n_neighbors_eucl, return_distance=True
-            )
+            dist, nb_indexes = knn.kneighbors(vector, self.config.n_neighbors_eucl, return_distance=True)
             return_dist, return_nb_indexes = flatten_neighbour_list(dist, nb_indexes)
             return_names = [self.ids_dict[i] for i in return_nb_indexes]
             distances_eucl_ = {
-                key: val
-                for key, val in dict(zip(return_names, return_dist)).items()
-                if key != target_unit
+                key: val for key, val in dict(zip(return_names, return_dist)).items() if key != target_unit
             }
             self.unit_distances_eucl[target_unit] = distances_eucl_
         return self.unit_distances_eucl
 
-    def get_test_control_groups(
-        self, neighbors_dict: dict, adj_control: List[str] = None
-    ) -> dict:
+    def get_test_control_groups(self, neighbors_dict: dict, adj_control: List[str] = None) -> dict:
         """
         Формирует словарь со списками тестовых и контрольных юнитов в значениях словаря
 
@@ -244,9 +210,7 @@ class KNNEUCLSelection(ABCore, StaticHelper):
         """
         if not adj_control:
             unique_closest_cities = self.find_unique_closest_units(neighbors_dict)
-            self.control_units = [
-                list(val)[0] for _, val in unique_closest_cities.items()
-            ]
+            self.control_units = [list(val)[0] for _, val in unique_closest_cities.items()]
         else:
             self.control_units = adj_control
         return dict(
@@ -285,9 +249,5 @@ class GetSelectors(ABCore):
         if kwargs:
             super().__init__(**kwargs)
         selectors = self.config.selectors
-        ready_selectors = {
-            i: AllSelectors.__annotations__[i]
-            for i in selectors
-            if i in AllSelectors.__annotations__
-        }
+        ready_selectors = {i: AllSelectors.__annotations__[i] for i in selectors if i in AllSelectors.__annotations__}
         return ready_selectors

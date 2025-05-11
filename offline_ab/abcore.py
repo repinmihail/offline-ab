@@ -55,9 +55,7 @@ class StaticHelper:
         Returns:
             dict: словарь с корректированными p-value значениями
         """
-        decision, adj_pvals, sidak_aplha, bonf_alpha = multipletests(
-            pvals=list_of_pvals, alpha=alpha, method=method
-        )
+        decision, adj_pvals, sidak_aplha, bonf_alpha = multipletests(pvals=list_of_pvals, alpha=alpha, method=method)
         return dict(
             decision=list(decision),
             adjusted_pvals=[np.round(i, 10) for i in adj_pvals],
@@ -66,9 +64,7 @@ class StaticHelper:
         )
 
     @staticmethod
-    def validation_split(
-        x: str, start_of_validation: str, start_of_test: str, end_of_test: str
-    ) -> str:
+    def validation_split(x: str, start_of_validation: str, start_of_test: str, end_of_test: str) -> str:
         """
         Разметка данных.
 
@@ -159,14 +155,10 @@ class ABCore(StaticHelper):
         Returns:
             Tuple[float, float]: границы доверительного интервала
         """
-        left, right = np.quantile(
-            bootstrap_stats, [self.config.alpha / 2, 1 - self.config.alpha / 2]
-        )
+        left, right = np.quantile(bootstrap_stats, [self.config.alpha / 2, 1 - self.config.alpha / 2])
         return left, right
 
-    def get_normal_ci(
-        self, bootstrap_stats: Union[np.array, List], pe: float
-    ) -> Tuple[float, float]:
+    def get_normal_ci(self, bootstrap_stats: Union[np.array, List], pe: float) -> Tuple[float, float]:
         """
         Строит нормальный доверительный интервал.
 
@@ -182,9 +174,7 @@ class ABCore(StaticHelper):
         left, right = pe - z * se, pe + z * se
         return left, right
 
-    def delta_method(
-        self, data: pd.DataFrame, column_for_grouped: list, is_sample: bool = False
-    ) -> dict:
+    def delta_method(self, data: pd.DataFrame, column_for_grouped: list, is_sample: bool = False) -> dict:
         """
         Дельта-метод
 
@@ -197,9 +187,7 @@ class ABCore(StaticHelper):
             dict: словарь с рассчитанными параметрами
         """
 
-        delta_df = data.groupby(column_for_grouped).agg(
-            {self.config.target_metric: ["sum", "count"]}
-        )
+        delta_df = data.groupby(column_for_grouped).agg({self.config.target_metric: ["sum", "count"]})
         n_users = len(delta_df)
         delta_df.columns = ["_".join(col).strip() for col in delta_df.columns.values]
         array_x = delta_df[f"{self.config.target_metric}_sum"].values
@@ -207,11 +195,7 @@ class ABCore(StaticHelper):
         mean_x, mean_y = np.mean(array_x), np.mean(array_y)
         var_x, var_y = np.var(array_x), np.var(array_y)
         cov_xy = np.cov(array_x, array_y)[0, 1]
-        var_metric = (
-            var_x / mean_y**2
-            - 2 * (mean_x / mean_y**3) * cov_xy
-            + (mean_x**2 / mean_y**4) * var_y
-        )
+        var_metric = var_x / mean_y**2 - 2 * (mean_x / mean_y**3) * cov_xy + (mean_x**2 / mean_y**4) * var_y
         if is_sample:
             var_metric = var_metric / n_users
         info_dict = {}
@@ -223,9 +207,7 @@ class ABCore(StaticHelper):
         info_dict["std_metric"] = np.sqrt(var_metric)
         return info_dict
 
-    def get_max_missing_in_current_exp(
-        self, seasonality: int = 7, max_days: int = 140, max_gaps: int = 5
-    ) -> dict:
+    def get_max_missing_in_current_exp(self, seasonality: int = 7, max_days: int = 140, max_gaps: int = 5) -> dict:
         """
         Метод для расчета максимально возможного количества пропущенных дней в текущем эксперименте.
 
@@ -305,9 +287,7 @@ class ABCore(StaticHelper):
         ts_test = TSDataset(df, freq="D").describe()
         return ts_test[ts_test["num_missing"] > 0]
 
-    def get_critical_units(
-        self, df: pd.DataFrame, max_missing: dict, metric: str
-    ) -> dict:
+    def get_critical_units(self, df: pd.DataFrame, max_missing: dict, metric: str) -> dict:
         """
         Возвращает юниты с большим количеством пропусков.
 
@@ -329,18 +309,10 @@ class ABCore(StaticHelper):
             )
         )
         for key, val in max_missing.items():
-            temp_df = df[df["periods"] == key][
-                [self.config.time_series_field, self.config.id_field, metric]
-            ]
-            temp_miss = self.get_df_with_missing_values(temp_df, metric)[
-                ["num_missing"]
-            ]
-            temp_miss["is_critical_num"] = temp_miss["num_missing"].apply(
-                lambda x: 1 if x > val else 0
-            )
-            critical_units[key] = list(
-                temp_miss[temp_miss["is_critical_num"] == 1].index
-            )
+            temp_df = df[df["periods"] == key][[self.config.time_series_field, self.config.id_field, metric]]
+            temp_miss = self.get_df_with_missing_values(temp_df, metric)[["num_missing"]]
+            temp_miss["is_critical_num"] = temp_miss["num_missing"].apply(lambda x: 1 if x > val else 0)
+            critical_units[key] = list(temp_miss[temp_miss["is_critical_num"] == 1].index)
         return critical_units
 
     def get_clear_data(self, df: pd.DataFrame, critical_units: dict) -> pd.DataFrame:
@@ -376,12 +348,8 @@ class ABCore(StaticHelper):
         critical_units = dict()
         max_missing = self.get_max_missing_in_current_exp()
         for metric in self.config.all_metrics:
-            single_metric_df = df[
-                [self.config.time_series_field, self.config.id_field, metric]
-            ]
-            critical_units_ = self.get_critical_units(
-                single_metric_df, max_missing, metric
-            )
+            single_metric_df = df[[self.config.time_series_field, self.config.id_field, metric]]
+            critical_units_ = self.get_critical_units(single_metric_df, max_missing, metric)
             critical_units[metric] = critical_units_
             if critical_units_:
                 clear_data_ = self.get_clear_data(single_metric_df, critical_units_)
@@ -403,18 +371,8 @@ class ABCore(StaticHelper):
         # если да, то запоминаем юниты и удаляем их
         units_with_nan = []
         for metric in self.config.all_metrics:
-            units_with_nan.extend(
-                list(
-                    set(
-                        ready_data[
-                            ready_data[metric].isna()
-                        ][self.config.id_field].tolist()
-                    )
-                )
-            )
-        ready_data_ = ready_data[
-            ~ready_data[self.config.id_field].isin(units_with_nan)
-        ]
+            units_with_nan.extend(list(set(ready_data[ready_data[metric].isna()][self.config.id_field].tolist())))
+        ready_data_ = ready_data[~ready_data[self.config.id_field].isin(units_with_nan)]
         # проверяем, остались ли тестовые юниты в данных,
         # если нет, то обновляем атрибуты
         empty_units = []
@@ -424,6 +382,7 @@ class ABCore(StaticHelper):
         if empty_units:
             print(
                 f"Найдено {len(empty_units)} тестовых юнитов \
-                    с пропущенными значениями: {empty_units}. Они будут исключены из тестовой группы.")
+                    с пропущенными значениями: {empty_units}. Они будут исключены из тестовой группы."
+            )
             self.config.test_units = [i for i in self.config.test_units if i not in empty_units]
         return ready_data_, critical_units

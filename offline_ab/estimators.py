@@ -45,36 +45,22 @@ class Bootstrap(ABCore):
         """
         if self.is_cuped:
             cuped_metric = f"{self.config.target_metric}_cuped"
-            control_values = np.array(
-                self.data[self.data[self.config.id_field].isin(self.control_units)][
-                    cuped_metric
-                ]
-            )
+            control_values = np.array(self.data[self.data[self.config.id_field].isin(self.control_units)][cuped_metric])
             test_values = np.array(
-                self.data[self.data[self.config.id_field].isin(self.config.test_units)][
-                    cuped_metric
-                ]
+                self.data[self.data[self.config.id_field].isin(self.config.test_units)][cuped_metric]
             )
-            assert len(control_values) == len(test_values), (
-                f"{len(control_values), len(test_values)}"
-            )
+            assert len(control_values) == len(test_values), f"{len(control_values), len(test_values)}"
         else:
             control_values = np.array(
-                self.data[self.data[self.config.id_field].isin(self.control_units)][
-                    self.config.target_metric
-                ]
+                self.data[self.data[self.config.id_field].isin(self.control_units)][self.config.target_metric]
             )
             test_values = np.array(
-                self.data[self.data[self.config.id_field].isin(self.config.test_units)][
-                    self.config.target_metric
-                ]
+                self.data[self.data[self.config.id_field].isin(self.config.test_units)][self.config.target_metric]
             )
             assert len(control_values) == len(test_values)
         n = len(control_values)
         control_group_true = np.array(
-            self.data[self.data[self.config.id_field].isin(self.control_units)][
-                f"{self.config.target_metric}_pilot"
-            ]
+            self.data[self.data[self.config.id_field].isin(self.control_units)][f"{self.config.target_metric}_pilot"]
         )
         test_group_true = np.array(
             self.data[self.data[self.config.id_field].isin(self.config.test_units)][
@@ -110,31 +96,23 @@ class Bootstrap(ABCore):
         difference_aa = np.zeros(self.config.n_iter_bootstrap)
         difference_ab = np.zeros(self.config.n_iter_bootstrap)
         for i in range(self.config.n_iter_bootstrap):
-            random_values_control = np.random.choice(
-                control_values, bootstrap_group_length, True
-            )
-            random_values_test = np.random.choice(
-                test_values, bootstrap_group_length, True
-            )
-            random_values_test_with_eff = np.random.choice(
-                test_values + self.effect, bootstrap_group_length, True
-            )
+            random_values_control = np.random.choice(control_values, bootstrap_group_length, True)
+            random_values_test = np.random.choice(test_values, bootstrap_group_length, True)
+            random_values_test_with_eff = np.random.choice(test_values + self.effect, bootstrap_group_length, True)
 
             control_metric = _help_function(self.metric_func, random_values_control)
             test_metric = _help_function(self.metric_func, random_values_test)
-            test_metric_with_eff = _help_function(
-                self.metric_func, random_values_test_with_eff
-            )
+            test_metric_with_eff = _help_function(self.metric_func, random_values_test_with_eff)
 
             difference_aa[i] = test_metric - control_metric
             difference_ab[i] = test_metric_with_eff - control_metric
         # Расчет точечных оценок
-        point_estimation_aa = _help_function(
-            self.metric_func, test_values
-        ) - _help_function(self.metric_func, control_values)
-        point_estimation_ab = _help_function(
-            self.metric_func, test_values + self.effect
-        ) - _help_function(self.metric_func, control_values)
+        point_estimation_aa = _help_function(self.metric_func, test_values) - _help_function(
+            self.metric_func, control_values
+        )
+        point_estimation_ab = _help_function(self.metric_func, test_values + self.effect) - _help_function(
+            self.metric_func, control_values
+        )
         # Считаем p-value
         adj_diffs_aa = difference_aa - point_estimation_aa
         adj_diffs_ab = difference_ab - point_estimation_ab
@@ -150,47 +128,31 @@ class Bootstrap(ABCore):
         has_effect_ab = not (ci_ab[0] < 0 < ci_ab[1])
 
         # Расчет эффекта для A/A теста
-        effect_aa = np.round(
-            point_estimation_aa / np.mean(vals["test_group_true_mean"]) * 100, 4
-        )
+        effect_aa = np.round(point_estimation_aa / np.mean(vals["test_group_true_mean"]) * 100, 4)
         effect_left_bound_aa = np.round(
-            (ci_aa[0] - point_estimation_aa)
-            / np.mean(vals["test_group_true_mean"])
-            * 100,
+            (ci_aa[0] - point_estimation_aa) / np.mean(vals["test_group_true_mean"]) * 100,
             3,
         )
         effect_right_bound_aa = np.round(
-            (ci_aa[1] - point_estimation_aa)
-            / np.mean(vals["test_group_true_mean"])
-            * 100,
+            (ci_aa[1] - point_estimation_aa) / np.mean(vals["test_group_true_mean"]) * 100,
             3,
         )
-        effect_avg_bound_aa = np.mean(
-            [np.abs(effect_left_bound_aa), np.abs(effect_right_bound_aa)]
-        )
+        effect_avg_bound_aa = np.mean([np.abs(effect_left_bound_aa), np.abs(effect_right_bound_aa)])
 
         # Расчет эффекта для A/B теста
         effect_ab = np.round(
-            point_estimation_ab
-            / np.mean(vals["test_group_true_mean"] + self.effect)
-            * 100,
+            point_estimation_ab / np.mean(vals["test_group_true_mean"] + self.effect) * 100,
             4,
         )
         effect_left_bound_ab = np.round(
-            (ci_ab[0] - point_estimation_ab)
-            / np.mean(vals["test_group_true_mean"] + self.effect)
-            * 100,
+            (ci_ab[0] - point_estimation_ab) / np.mean(vals["test_group_true_mean"] + self.effect) * 100,
             3,
         )
         effect_right_bound_ab = np.round(
-            (ci_ab[1] - point_estimation_ab)
-            / np.mean(vals["test_group_true_mean"] + self.effect)
-            * 100,
+            (ci_ab[1] - point_estimation_ab) / np.mean(vals["test_group_true_mean"] + self.effect) * 100,
             3,
         )
-        effect_avg_bound_ab = np.mean(
-            [np.abs(effect_left_bound_ab), np.abs(effect_right_bound_ab)]
-        )
+        effect_avg_bound_ab = np.mean([np.abs(effect_left_bound_ab), np.abs(effect_right_bound_ab)])
 
         effect_dict = dict(
             aa=[effect_aa, effect_avg_bound_aa],
@@ -250,9 +212,5 @@ class GetEstimator(ABCore):
         estimator = self.config.estimator
         if isinstance(estimator, str):
             estimator = [estimator]
-        ready_estimator = {
-            i: AllEstimators.__annotations__[i]
-            for i in estimator
-            if i in AllEstimators.__annotations__
-        }
+        ready_estimator = {i: AllEstimators.__annotations__[i] for i in estimator if i in AllEstimators.__annotations__}
         return ready_estimator

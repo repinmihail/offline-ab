@@ -67,9 +67,7 @@ def plot_time_series(
     if title:
         plt.title(title)
     if start_line:
-        modified_date = datetime.strptime(start_line, "%Y-%m-%d") + timedelta(
-            days=exp_duration_in_days
-        )
+        modified_date = datetime.strptime(start_line, "%Y-%m-%d") + timedelta(days=exp_duration_in_days)
         plt.axvspan(
             start_line,
             datetime.strftime(modified_date, "%Y-%m-%d"),

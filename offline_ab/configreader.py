@@ -36,9 +36,7 @@ class ConfigReader:
             if isinstance(params_dict["n_iter_bootstrap"], int):
                 self.n_iter_bootstrap = params_dict["n_iter_bootstrap"]
             else:
-                raise TypeError(
-                    """Параметр n_iter_bootstrap должен быть в типе данных int"""
-                )
+                raise TypeError("""Параметр n_iter_bootstrap должен быть в типе данных int""")
         else:
             self.n_iter_bootstrap = 100_000
 
@@ -46,9 +44,7 @@ class ConfigReader:
             if isinstance(params_dict["max_missing_values"], int):
                 self.max_missing_values = params_dict["max_missing_values"]
             else:
-                raise TypeError(
-                    """Параметр max_missing_values должен быть в типе данных int"""
-                )
+                raise TypeError("""Параметр max_missing_values должен быть в типе данных int""")
         else:
             self.max_missing_values = 5
 
@@ -56,9 +52,7 @@ class ConfigReader:
             if isinstance(params_dict["n_neighbors_dtw"], int):
                 self.n_neighbors_dtw = params_dict["n_neighbors_dtw"]
             else:
-                raise TypeError(
-                    """Параметр n_neighbors_dtw должен быть в типе данных int"""
-                )
+                raise TypeError("""Параметр n_neighbors_dtw должен быть в типе данных int""")
         else:
             self.n_neighbors_dtw = 5
 
@@ -66,9 +60,7 @@ class ConfigReader:
             if isinstance(params_dict["n_neighbors_eucl"], int):
                 self.n_neighbors_eucl = params_dict["n_neighbors_eucl"]
             else:
-                raise TypeError(
-                    """Параметр n_neighbors_eucl должен быть в типе данных int"""
-                )
+                raise TypeError("""Параметр n_neighbors_eucl должен быть в типе данных int""")
         else:
             self.n_neighbors_eucl = 5
 
@@ -106,14 +98,11 @@ class ConfigReader:
         if kwargs:
             self.start_of_test = params_dict["start_of_test"]
         self.end_of_test = (
-            datetime.strptime(self.start_of_test, "%Y-%m-%d")
-            + timedelta(days=self.days_for_test)
+            datetime.strptime(self.start_of_test, "%Y-%m-%d") + timedelta(days=self.days_for_test)
         ).strftime("%Y-%m-%d")
         self.start_of_validation = (
-            datetime.strptime(self.start_of_test, "%Y-%m-%d")
-            + timedelta(days=-(self.days_for_test + 1))
+            datetime.strptime(self.start_of_test, "%Y-%m-%d") + timedelta(days=-(self.days_for_test + 1))
         ).strftime("%Y-%m-%d")
         self.start_of_knn = (
-            datetime.strptime(self.start_of_validation, "%Y-%m-%d")
-            + timedelta(days=-(self.days_for_test + 2))
+            datetime.strptime(self.start_of_validation, "%Y-%m-%d") + timedelta(days=-(self.days_for_test + 2))
         ).strftime("%Y-%m-%d")

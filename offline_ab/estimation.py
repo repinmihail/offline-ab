@@ -32,17 +32,15 @@ class CrossValEstimation(ABCore):
         Returns:
             validation_min_start_date, validation_max_end_date (str): Минимальная и максимальная даты
         """
-        self.validation_min_start_date = sorted(
-            list(set(df[self.config.time_series_field].tolist()))
-        )[self.config.days_for_test * 2 + 2]
-        self.validation_max_start_date = sorted(
-            list(set(df[self.config.time_series_field].tolist()))
-        )[-self.config.days_for_test * 2 - 1]
+        self.validation_min_start_date = sorted(list(set(df[self.config.time_series_field].tolist())))[
+            self.config.days_for_test * 2 + 2
+        ]
+        self.validation_max_start_date = sorted(list(set(df[self.config.time_series_field].tolist())))[
+            -self.config.days_for_test * 2 - 1
+        ]
         len_timeseries_in_df = len(set(df[self.config.time_series_field].tolist()))
         if self.config.days_for_test * 2 > len_timeseries_in_df:
-            raise ValueError(
-                "Задан слишком большой период для теста. Не хватает данных для кросс-валидации"
-            )
+            raise ValueError("Задан слишком большой период для теста. Не хватает данных для кросс-валидации")
         date_list = pd.date_range(
             start=self.validation_min_start_date,
             end=self.validation_max_start_date,
@@ -96,9 +94,7 @@ class CrossValEstimation(ABCore):
                             **vars(self.config),
                         )
                         return_dict = estimator_inst.runner()
-                        self.saving_results[name][self.validation_date_list[i]] = (
-                            return_dict
-                        )
+                        self.saving_results[name][self.validation_date_list[i]] = return_dict
                     except AssertionError:
                         self.skip_exps[name] += 1
                         if self.skip_exps[name] % 5 == 0:
@@ -116,8 +112,7 @@ class CrossValEstimation(ABCore):
             help_dict["count_iter"].append(len(val))
             res_dict[key] = help_dict
         calc_res = {
-            key: {sub_key: np.mean(sub_val) for sub_key, sub_val in val.items()}
-            for key, val in res_dict.items()
+            key: {sub_key: np.mean(sub_val) for sub_key, sub_val in val.items()} for key, val in res_dict.items()
         }
         self.cv_output = pd.DataFrame.from_dict(calc_res, orient="index")
         return self.cv_output
@@ -146,31 +141,23 @@ class CrossValEstimation(ABCore):
             metric_df["decreaser"] = self.config.decreaser
 
             metric_df["row_number"] = [i for i in range(metric_df.shape[0])]
-            self.all_metrics_cv_result_df = pd.concat(
-                [self.all_metrics_cv_result_df, metric_df]
-            )
+            self.all_metrics_cv_result_df = pd.concat([self.all_metrics_cv_result_df, metric_df])
 
         self.best_selectors_cv = (
-            self.all_metrics_cv_result_df[
-                self.all_metrics_cv_result_df["row_number"] == 0
-            ]
+            self.all_metrics_cv_result_df[self.all_metrics_cv_result_df["row_number"] == 0]
             .reset_index(names="selector")
             .drop("row_number", axis=1)
         )
         selectors = GetSelectors(**vars(self.config))
         self.best_selectors_by_metric = {
             i: selectors()[
-                self.best_selectors_cv[self.best_selectors_cv["metric"] == i]
-                .reset_index()
-                .loc[0, "selector"]
+                self.best_selectors_cv[self.best_selectors_cv["metric"] == i].reset_index().loc[0, "selector"]
             ]
             for i in self.best_selectors_cv["metric"]
         }
         return self.best_selectors_by_metric
 
-    def estimation_pilot(
-        self, df: pd.DataFrame, custom_selectors: dict = None
-    ) -> pd.DataFrame:
+    def estimation_pilot(self, df: pd.DataFrame, custom_selectors: dict = None) -> pd.DataFrame:
         """
         Метод для оценки пилота с помощью лучших селекторов, отобранных на кросс-валидации для каждой метрики
 
@@ -187,9 +174,7 @@ class CrossValEstimation(ABCore):
         else:
             best_selectors = self.cross_validation_for_all_metrics(df)
         self.config.start_of_test = self.true_start_of_test
-        self.estimation_result_dict = defaultdict(
-            dict, {k: {} for k in (best_selectors.keys())}
-        )
+        self.estimation_result_dict = defaultdict(dict, {k: {} for k in (best_selectors.keys())})
         for metric in self.config.all_metrics:
             print("Running estimation for metric: ", metric)
             self.config.target_metric = metric
@@ -215,13 +200,11 @@ class CrossValEstimation(ABCore):
                 )
                 return_dict = estimator_inst.runner()
             self.estimation_result_dict[metric] = return_dict
-        estimation_result_df = pd.DataFrame.from_dict(
-            self.estimation_result_dict, orient="index"
-        ).reset_index(names="metric")
+        estimation_result_df = pd.DataFrame.from_dict(self.estimation_result_dict, orient="index").reset_index(
+            names="metric"
+        )
         try:
-            self.estimation_result_df = estimation_result_df.merge(
-                self.best_selectors_cv, how="left", on="metric"
-            )
+            self.estimation_result_df = estimation_result_df.merge(self.best_selectors_cv, how="left", on="metric")
         except AttributeError:
             print("Results without data from cross-validation")
             self.estimation_result_df = estimation_result_df
