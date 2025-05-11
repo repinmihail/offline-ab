@@ -6,8 +6,6 @@ from offline_ab.gapfillings import FillTheGaps
 from offline_ab.selection import KNNDTWSelection, KNNEUCLSelection
 from offline_ab.vardecreasers import CUPED
 
-from offline_ab.visualization import *
-
 __version__ = "0.0.1"
 
 __all__ = [

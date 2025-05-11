@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from etna.datasets.tsdataset import TSDataset
 from etna.transforms import TimeSeriesImputerTransform
 from datetime import datetime

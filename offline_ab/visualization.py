@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from typing import List, Tuple
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 TITLESIZE = 15
 LABELSIZE = 15
@@ -86,7 +86,6 @@ def plot_ci(
     textstr = " \n".join(
         (
             f"{test_type} test",
-            f"",
             f"Point estimation: {round(point_estimation, 2)}",
             f"CI left bound: {round(ci[0], 2)}",
             f"CI right bound: {round(ci[1], 2)}",
