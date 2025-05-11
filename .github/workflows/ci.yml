@@ -30,7 +30,7 @@ jobs:
 
       - name: 📏 Run Ruff linter
         run: |
-          poetry run ruff check poetry_project
+          poetry run ruff check offline_ab/
 
   build:
     name: 🔵 Build Docker Image
@@ -48,4 +48,4 @@ jobs:
         with:
           context: .
           push: false
-          tags: poetry-projectt:latest
+          tags: offline-ab:latest
