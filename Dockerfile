@@ -17,7 +17,7 @@ COPY offline_ab ./offline_ab
 
 # Устанавливаем зависимости и сам проект
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-interaction --no-ansi --no-root
+    && poetry install --no-dev --no-interaction --no-ansi
 
 # Точка входа
 CMD ["python", "-c", "import importlib.metadata; print(importlib.metadata.version('offline-ab'))"]
