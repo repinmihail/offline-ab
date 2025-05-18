@@ -12,8 +12,8 @@ from statsmodels.stats.multitest import multipletests
 from typing import List, Tuple, Union
 from datetime import datetime  # noqa: F811
 from etna.datasets.tsdataset import TSDataset
-from offline_ab.gapfillings import FillTheGaps
-from offline_ab.configreader import ConfigReader
+from offline_ab.utils.gapfillings import FillTheGaps
+from offline_ab.utils.configreader import ConfigReader
 
 warnings.filterwarnings("ignore")
 

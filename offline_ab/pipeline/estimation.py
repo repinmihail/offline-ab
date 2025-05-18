@@ -5,9 +5,9 @@ from collections import defaultdict
 from tqdm.notebook import tqdm
 from typing import List
 from offline_ab.abcore import ABCore
-from offline_ab.selection import GetSelectors
-from offline_ab.vardecreasers import GetDecreaser
-from offline_ab.estimators import GetEstimator
+from offline_ab.transformers.selectors import GetSelectors
+from offline_ab.transformers.vardecreasers import GetDecreaser
+from offline_ab.transformers.estimators import GetEstimator
 
 
 class CrossValEstimation(ABCore):

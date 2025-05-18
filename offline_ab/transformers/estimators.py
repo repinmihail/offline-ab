@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import offline_ab.visualization as viz
+import offline_ab.utils.visualization as viz
 
 from typing import Callable, List
 from offline_ab.abcore import ABCore
